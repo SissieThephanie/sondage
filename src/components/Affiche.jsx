@@ -141,9 +141,6 @@ const VoteSondage = () => {
     <div className="div">
       <nav className="px-4 py-3">
         <div className="container mx-auto flex items-center justify-between">
-        <div className="text-lg font-bold">
-            <a href="#" className="hover:text-gray-300">Transparence</a>
-          </div>
           <div className="space-y-7">{renderButtons()}</div>
         </div>
       </nav>
