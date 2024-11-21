@@ -1,143 +1,164 @@
 import { useState } from 'react';
 
 const VoteSondage = () => {
-  // État pour stocker les projets et leur nombre de votes
-  const [search, setSearch] = useState("");
-  const [projects, setProjects] = useState([
+  const [activeCategory, setActiveCategory] = useState('Sondages');
+  const [userVotes, setUserVotes] = useState({});
+  const [polls, setPolls] = useState([
     {
       id: 1,
-      name: 'Projet A',
-      description: 'Un projet innovant pour améliorer l’efficacité énergétique.',
-      image: 'project.webp', // Remplacez par vos images
-      votes: 0,
-    },
-    {
-      id: 2,
-      name: 'Projet B',
-      description: 'Une solution technologique pour réduire les déchets plastiques.',
-      image: 'Projet.webp', // Remplacez par vos images
-      votes: 0,
-    },
-    {
-      id: 3,
-      name: 'Projet C',
-      description: 'Un projet éducatif pour démocratiser l’accès au numérique.',
-      image: 'https://via.placeholder.com/150', // Remplacez par vos images
-      votes: 0,
+      question: 'Quel est votre fruit préféré ?',
+      options: [
+        { id: 1, label: 'Pomme', image: 'https://via.placeholder.com/100', votes: 0 },
+        { id: 2, label: 'Banane', image: 'https://via.placeholder.com/100', votes: 0 },
+        { id: 3, label: 'Orange', image: 'https://via.placeholder.com/100', votes: 0 },
+      ],
     },
   ]);
+  const [projects] = useState([
+    { id: 1, title: 'Projet 1', description: 'Description du projet 1.', image: 'https://via.placeholder.com/200' },
+    { id: 2, title: 'Projet 2', description: 'Description du projet 2.', image: 'https://via.placeholder.com/200' },
+    { id: 3, title: 'Projet 3', description: 'Description du projet 3.', image: 'https://via.placeholder.com/200' },
+  ]);
+  const [budget] = useState({
+    sources: [{ id: 1, source: 'Donations', amount: 500 }, { id: 2, source: 'Partenaires', amount: 1500 }],
+    expenses: [{ id: 1, description: 'Achat matériel', amount: 300 }, { id: 2, description: 'Publicité', amount: 200 }],
+  });
 
-  // État pour savoir si l'utilisateur a déjà voté
-  const [userVote, setUserVote] = useState(null);
-  const [hasVoted, setHasVoted] = useState(false);
+  const handleVote = (pollId, optionId) => {
+    const previousVote = userVotes[pollId];
+    if (previousVote === optionId) return;
 
-  const handleSearch = (e) => {
-    e.preventDefault();
-    setSearch(e.target.value);
-  };
-
-  // Fonction pour gérer le clic sur un projet
-  const handleVote = (projectId) => {
-    if (hasVoted) return; // Empêche de voter si déjà voté
-    if (userVote !== null) {
-      setProjects((prevProjects) =>
-        prevProjects.map((project) =>
-          project.id === userVote
-            ? { ...project, votes: project.votes - 1 } // Retirer un vote du projet précédent
-            : project
-        )
-      );
-    }
-    setProjects((prevProjects) =>
-      prevProjects.map((project) =>
-        project.id === projectId
-          ? { ...project, votes: project.votes + 1 }
-          : project
+    setPolls((prevPolls) =>
+      prevPolls.map((poll) =>
+        poll.id === pollId
+          ? {
+              ...poll,
+              options: poll.options.map((option) =>
+                option.id === optionId
+                  ? { ...option, votes: option.votes + 1 }
+                  : option.id === previousVote
+                  ? { ...option, votes: option.votes - 1 }
+                  : option
+              ),
+            }
+          : poll
       )
     );
-    setUserVote(projectId);
-    setHasVoted(true); // Marque comme "déjà voté"
+    setUserVotes((prevVotes) => ({ ...prevVotes, [pollId]: optionId }));
   };
 
-  const filteredProjects = projects.filter((project) =>
-    project.name.toLowerCase().includes(search.toLowerCase())
+  const renderButtons = () => {
+    const categories = [ 'All','Sondages', 'Projets', 'Budget'];
+    return categories.map((category) => (
+      <button
+        key={category}
+        onClick={() => setActiveCategory(category)}
+        className={`px-4 py-2 rounded ${activeCategory === category ? 'bg-indigo-600 text-white' : 'bg-gray-200'}`}
+      >
+        {category}
+      </button>
+    ));
+  };
+
+  const renderPolls = () => (
+    <div>
+      <h3 className="text-xl font-bold mb-4">Sondages</h3>
+      {polls.map((poll) => (
+        <div key={poll.id} className="bg-gray-100 p-4 rounded-lg shadow-md">
+          <h4 className="text-lg font-bold mb-4">{poll.question}</h4>
+          <div className="grid grid-cols-3 gap-4">
+            {poll.options.map((option) => (
+              <div key={option.id} className="text-center bg-white p-4 rounded-lg shadow-md">
+                <img src={option.image} alt={option.label} className="w-20 h-20 mx-auto mb-2" />
+                <p className="font-bold">{option.label}</p>
+                <button
+                  onClick={() => handleVote(poll.id, option.id)}
+                  className={`mt-2 px-4 py-2 rounded-md ${userVotes[poll.id] === option.id ? 'bg-green-500 text-white' : 'bg-indigo-600 text-white'}`}
+                >
+                  {userVotes[poll.id] === option.id ? 'Choisi' : 'Voter'}
+                </button>
+                <p className="text-sm mt-2 text-gray-600">Votes: {option.votes}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
   );
+
+  const renderProjects = () => (
+    <div>
+      <h3 className="text-xl font-bold mb-4">Projets</h3>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {projects.map((project) => (
+          <div key={project.id} className="bg-gray-100 p-4 rounded-lg shadow-md">
+            <img src={project.image} alt={project.title} className="w-full h-40 object-cover rounded-lg mb-4" />
+            <h4 className="text-lg font-bold">{project.title}</h4>
+            <p className="text-gray-700">{project.description}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  const renderBudget = () => (
+    <div>
+      <h3 className="text-xl font-bold mb-4">Budget</h3>
+      <div className="overflow-x-auto">
+        <table className="table-auto w-full border-collapse border border-gray-200 shadow-md rounded-lg">
+          <thead className="bg-indigo-600 text-white">
+            <tr>
+              <th className="px-4 py-2 border border-gray-200 text-left">Type</th>
+              <th className="px-4 py-2 border border-gray-200 text-left">Description</th>
+              <th className="px-4 py-2 border border-gray-200 text-right">Montant (€)</th>
+            </tr>
+          </thead>
+          <tbody>
+            {/* Sources de financement */}
+            {budget.sources.map((source, index) => (
+              <tr key={source.id} className={`${index % 2 === 0 ? 'bg-gray-100' : 'bg-white'}`}>
+                <td className="px-4 py-2 border border-gray-200">Source</td>
+                <td className="px-4 py-2 border border-gray-200">{source.source}</td>
+                <td className="px-4 py-2 border border-gray-200 text-right">{source.amount.toLocaleString()} €</td>
+              </tr>
+            ))}
+            {/* Dépenses */}
+            {budget.expenses.map((expense, index) => (
+              <tr key={expense.id} className={`${(index + budget.sources.length) % 2 === 0 ? 'bg-gray-100' : 'bg-white'}`}>
+                <td className="px-4 py-2 border border-gray-200">Dépense</td>
+                <td className="px-4 py-2 border border-gray-200">{expense.description}</td>
+                <td className="px-4 py-2 border border-gray-200 text-right">{expense.amount.toLocaleString()} €</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+  
 
   return (
     <div className="div">
-      <nav className="bg-gray-800 text-white px-4 py-3">
+      <nav className="px-4 py-3">
         <div className="container mx-auto flex items-center justify-between">
-          <div className="text-lg font-bold">
-            <a href="#" className="hover:text-gray-300">
-              MonSite
-            </a>
+        <div className="text-lg font-bold">
+            <a href="#" className="hover:text-gray-300">Transparence</a>
           </div>
-          <div className="hidden md:flex space-x-6">
-            <a href="#" className="hover:text-gray-300">
-              Accueil
-            </a>
-            <a href="#" className="hover:text-gray-300">
-              À propos
-            </a>
-            <a href="#" className="hover:text-gray-300">
-              Services
-            </a>
-            <a href="#" className="hover:text-gray-300">
-              Contact
-            </a>
-          </div>
-          <form className="relative w-full max-w-md" onSubmit={handleSearch}>
-            <input
-              type="text"
-              placeholder="Recherche..."
-              value={search}
-              onChange={handleSearch}
-              className="w-full rounded-lg bg-gray-700 text-white px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            />
-            <button
-              type="submit"
-              className="absolute right-2 top-2 bg-indigo-600 text-white px-3 py-1 rounded-md hover:bg-indigo-700"
-            >
-              🔍
-            </button>
-          </form>
+          <div className="space-y-7">{renderButtons()}</div>
         </div>
       </nav>
 
-      <div className="font-sans p-6 text-center">
-        <h1 className="text-3xl font-bold text-gray-800">Sondage des Projets</h1>
-        <p className="mt-4 text-gray-600">
-          Cliquez sur un projet pour voter. Vous ne pouvez voter qu'une seule fois.
-        </p>
-
-        <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {filteredProjects.map((project) => (
-            <div
-              key={project.id}
-              onClick={() => handleVote(project.id)}
-              className={`relative rounded-lg border shadow-md p-4 hover:scale-105 transition-transform ${
-                hasVoted ? 'cursor-not-allowed opacity-80' : 'cursor-pointer'
-              }`}
-            >
-              <img
-                src={project.image}
-                alt={project.name}
-                className="w-full h-40 object-cover rounded-md"
-              />
-              <h2 className="mt-4 text-xl font-semibold text-gray-800">
-                {project.name}
-              </h2>
-              <p className="mt-2 text-gray-600">{project.description}</p>
-              <p className="mt-4 text-lg font-bold text-blue-600">
-                {project.votes} vote(s)
-              </p>
-            </div>
-          ))}
-        </div>
-
-        {hasVoted && (
-          <p className="mt-6 text-red-500">Vous avez déjà voté !</p>
+      <div className="container mx-auto mt-8">
+        {activeCategory === 'All' && (
+          <>
+            {renderPolls()}
+            {renderProjects()}
+            {renderBudget()}
+          </>
         )}
+        {activeCategory === 'Sondages' && renderPolls()}
+        {activeCategory === 'Projets' && renderProjects()}
+        {activeCategory === 'Budget' && renderBudget()}
       </div>
     </div>
   );
